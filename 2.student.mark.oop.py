@@ -29,7 +29,6 @@ class SchoolManagementSystem:
         self.students = []
         self.courses = []
 
-    # Input methods
     def input_students(self):
         num_students = int(input("Enter the number of students: "))
         for _ in range(num_students):
@@ -62,7 +61,6 @@ class SchoolManagementSystem:
             except ValueError:
                 print("Invalid mark. Please enter a numeric value.")
 
-    # Listing methods
     def list_students(self):
         if not self.students:
             print("No students available.")
@@ -79,7 +77,6 @@ class SchoolManagementSystem:
         for course in self.courses:
             print(course)
 
-    # Show marks
     def show_student_marks(self):
         if not self.students or not self.courses:
             print("No students or courses available to show marks.")
@@ -94,7 +91,6 @@ class SchoolManagementSystem:
             mark = student.get_mark(course_id)
             print(f"Student ID: {student.student_id}, Name: {student.name}, Mark: {mark}")
 
-    # Utility methods
     def find_course(self, course_id):
         for course in self.courses:
             if course.course_id == course_id:

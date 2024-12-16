@@ -2,172 +2,141 @@ import math
 import numpy as np
 import curses
 
+
 class Student:
     def __init__(self, student_id, name, dob):
         self.student_id = student_id
         self.name = name
         self.dob = dob
         self.marks = {}
-        self.gpa = 0.0
+        self.courses = {}
 
-    def __str__(self):
-        return f"{self.name} ({self.student_id}) - GPA: {self.gpa}"
-
-    def input_mark(self, course_id, mark):
-        self.marks[course_id] = mark
-        self.calculate_gpa()
-
-    def get_mark(self, course_id):
-        return self.marks.get(course_id, "Not marked")
+    def input_mark(self, course_id, mark, credit):
+        rounded_mark = math.floor(mark * 10) / 10  # Round down to 1 decimal
+        self.marks[course_id] = rounded_mark
+        self.courses[course_id] = credit
 
     def calculate_gpa(self):
-        if self.marks:
-            self.gpa = sum(self.marks.values()) / len(self.marks)
-            self.gpa = math.floor(self.gpa * 10) / 10
-
-    def calculate_weighted_gpa(self, course_credits):
-        weighted_sum = 0
-        total_credits = 0
-        for course_id, mark in self.marks.items():
-            credits = course_credits.get(course_id, 1)
-            weighted_sum += mark * credits
-            total_credits += credits
-        if total_credits > 0:
-            self.gpa = weighted_sum / total_credits
-            self.gpa = math.floor(self.gpa * 10) / 10
-        else:
-            self.gpa = 0
-
-class Course:
-    def __init__(self, course_id, name, credits):
-        self.course_id = course_id
-        self.name = name
-        self.credits = credits
+        if not self.marks or not self.courses:
+            return 0.0
+        marks = np.array(list(self.marks.values()))
+        credits = np.array([self.courses[course_id] for course_id in self.marks.keys()])
+        weighted_sum = np.sum(marks * credits)
+        total_credits = np.sum(credits)
+        return weighted_sum / total_credits if total_credits > 0 else 0.0
 
     def __str__(self):
-        return f"{self.name} ({self.course_id}) - Credits: {self.credits}"
+        return f"Student ID: {self.student_id}, Name: {self.name}, DoB: {self.dob}, GPA: {self.calculate_gpa():.2f}"
+
+
+class Course:
+    def __init__(self, course_id, name, credit):
+        self.course_id = course_id
+        self.name = name
+        self.credit = credit
+
+    def __str__(self):
+        return f"Course ID: {self.course_id}, Name: {self.name}, Credits: {self.credit}"
+
 
 class SchoolManagementSystem:
     def __init__(self):
         self.students = []
-        self.courses = []
-        self.course_credits = {}
+        self.courses = {}
 
     def input_students(self, stdscr):
-        stdscr.clear()
-        num_students = int(input("Enter number of students: "))
+        num_students = int(self.get_input(stdscr, "Enter the number of students: "))
         for _ in range(num_students):
-            student_id = input("Student ID: ")
-            name = input("Student Name: ")
-            dob = input("Student DoB (YYYY-MM-DD): ")
+            student_id = self.get_input(stdscr, "Enter student ID: ")
+            name = self.get_input(stdscr, "Enter student name: ")
+            dob = self.get_input(stdscr, "Enter student DoB (YYYY-MM-DD): ")
             self.students.append(Student(student_id, name, dob))
-        stdscr.refresh()
 
     def input_courses(self, stdscr):
-        stdscr.clear()
-        num_courses = int(input("Enter number of courses: "))
+        num_courses = int(self.get_input(stdscr, "Enter the number of courses: "))
         for _ in range(num_courses):
-            course_id = input("Course ID: ")
-            name = input("Course Name: ")
-            credits = int(input("Credits: "))
-            self.courses.append(Course(course_id, name, credits))
-            self.course_credits[course_id] = credits
-        stdscr.refresh()
+            course_id = self.get_input(stdscr, "Enter course ID: ")
+            name = self.get_input(stdscr, "Enter course name: ")
+            credit = float(self.get_input(stdscr, "Enter course credits: "))
+            self.courses[course_id] = Course(course_id, name, credit)
 
     def input_marks(self, stdscr):
         if not self.students or not self.courses:
-            print("No students or courses available.")
+            self.show_message(stdscr, "No students or courses available to input marks.")
+            return
+        course_id = self.get_input(stdscr, "Enter the course ID to input marks: ")
+        course = self.courses.get(course_id)
+        if not course:
+            self.show_message(stdscr, "Course not found.")
+            return
+        for student in self.students:
+            mark = float(self.get_input(stdscr, f"Enter mark for {student.name} ({student.student_id}): "))
+            student.input_mark(course_id, mark, course.credit)
+
+    def list_students(self, stdscr):
+        if not self.students:
+            self.show_message(stdscr, "No students available.")
+            return
+        self.students.sort(key=lambda s: s.calculate_gpa(), reverse=True)  
+        stdscr.clear()
+        for student in self.students:
+            stdscr.addstr(str(student) + "\n")
+        stdscr.refresh()
+        stdscr.getch()
+
+    def list_courses(self, stdscr):
+        if not self.courses:
+            self.show_message(stdscr, "No courses available.")
             return
         stdscr.clear()
-        course_id = input("Enter course ID to input marks: ")
-        course = self.find_course(course_id)
-        if not course:
-            print("Course not found.")
-            return
-        print(f"Input marks for {course.name} ({course.course_id})")
-        for student in self.students:
-            try:
-                mark = float(input(f"Mark for {student.name}: "))
-                mark = math.floor(mark * 10) / 10
-                student.input_mark(course_id, mark)
-            except ValueError:
-                print("Invalid mark.")
+        for course in self.courses.values():
+            stdscr.addstr(str(course) + "\n")
         stdscr.refresh()
+        stdscr.getch()
 
-    def list_students(self):
-        if not self.students:
-            print("No students available.")
-            return
-        print("Students List:")
-        for student in self.students:
-            print(student)
+    def show_message(self, stdscr, message):
+        stdscr.clear()
+        stdscr.addstr(message + "\n")
+        stdscr.refresh()
+        stdscr.getch()
 
-    def list_courses(self):
-        if not self.courses:
-            print("No courses available.")
-            return
-        print("Courses List:")
-        for course in self.courses:
-            print(course)
-
-    def show_student_marks(self):
-        if not self.students or not self.courses:
-            print("No students or courses available.")
-            return
-        course_id = input("Enter course ID to show marks: ")
-        course = self.find_course(course_id)
-        if not course:
-            print("Course not found.")
-            return
-        print(f"Marks for {course.name} ({course.course_id})")
-        for student in self.students:
-            mark = student.get_mark(course_id)
-            print(f"{student.name}: {mark}")
-
-    def find_course(self, course_id):
-        for course in self.courses:
-            if course.course_id == course_id:
-                return course
-        return None
-
-    def sort_students_by_gpa(self):
-        self.students.sort(key=lambda x: x.gpa, reverse=True)
+    def get_input(self, stdscr, prompt):
+        stdscr.addstr(prompt)
+        stdscr.refresh()
+        curses.echo()
+        input_value = stdscr.getstr().decode("utf-8")
+        curses.noecho()
+        return input_value
 
     def run(self, stdscr):
+        curses.curs_set(0)
         while True:
             stdscr.clear()
-            print("\nMenu:")
-            print("1. Input Students")
-            print("2. Input Courses")
-            print("3. Input Marks")
-            print("4. List Courses")
-            print("5. List Students")
-            print("6. Show Marks")
-            print("7. Sort Students by GPA")
-            print("8. Exit")
-            choice = input("Choose an option: ")
-            if choice == '1':
-                self.input_students(stdscr)
-            elif choice == '2':
-                self.input_courses(stdscr)
-            elif choice == '3':
-                self.input_marks(stdscr)
-            elif choice == '4':
-                self.list_courses()
-            elif choice == '5':
-                self.list_students()
-            elif choice == '6':
-                self.show_student_marks()
-            elif choice == '7':
-                self.sort_students_by_gpa()
-                self.list_students()
-            elif choice == '8':
-                print("Exiting program.")
-                break
-            else:
-                print("Invalid choice.")
+            stdscr.addstr("Menu:\n")
+            stdscr.addstr("1. Input Students\n")
+            stdscr.addstr("2. Input Courses\n")
+            stdscr.addstr("3. Input Marks\n")
+            stdscr.addstr("4. List Students (Sorted by GPA)\n")
+            stdscr.addstr("5. List Courses\n")
+            stdscr.addstr("6. Exit\n")
             stdscr.refresh()
 
+            choice = stdscr.getch()
+            if choice == ord('1'):
+                self.input_students(stdscr)
+            elif choice == ord('2'):
+                self.input_courses(stdscr)
+            elif choice == ord('3'):
+                self.input_marks(stdscr)
+            elif choice == ord('4'):
+                self.list_students(stdscr)
+            elif choice == ord('5'):
+                self.list_courses(stdscr)
+            elif choice == ord('6'):
+                break
+            else:
+                self.show_message(stdscr, "Invalid choice. Please try again.")
+
+
 if __name__ == "__main__":
-    system = SchoolManagementSystem()
-    curses.wrapper(system.run)
+    curses.wrapper(SchoolManagementSystem().run)

@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 class Student:
     def __init__(self, student_id, name, dob):
@@ -14,9 +15,14 @@ class Student:
         self.credits[course_id] = credit
 
     def calculate_gpa(self):
-        total_weighted_marks = sum(self.marks[course] * self.credits[course] for course in self.marks)
-        total_credits = sum(self.credits[course] for course in self.credits)
-        self.gpa = math.floor((total_weighted_marks / total_credits) * 10) / 10 if total_credits > 0 else 0.0
+        if len(self.marks) == 0:
+            self.gpa = 0.0
+            return
+        marks = np.array([self.marks[course] for course in self.marks])
+        credits = np.array([self.credits[course] for course in self.credits])
+        weighted_sum = np.sum(marks * credits)
+        total_credits = np.sum(credits)
+        self.gpa = math.floor((weighted_sum / total_credits) * 10) / 10 if total_credits > 0 else 0.0
 
     def __str__(self):
         return f"ID: {self.student_id}, Name: {self.name}, DoB: {self.dob}, GPA: {self.gpa:.1f}"
@@ -67,7 +73,9 @@ class SchoolManagementSystem:
             student.calculate_gpa()
 
     def sort_students_by_gpa(self):
-        self.students.sort(key=lambda x: x.gpa, reverse=True)
+        gpas = np.array([student.gpa for student in self.students])
+        sorted_indices = np.argsort(gpas)[::-1]
+        self.students = [self.students[i] for i in sorted_indices]
 
     def list_students(self):
         self.sort_students_by_gpa()
@@ -109,7 +117,6 @@ class SchoolManagementSystem:
                 break
             else:
                 print("Invalid choice. Try again.")
-
 
 if __name__ == "__main__":
     sms = SchoolManagementSystem()

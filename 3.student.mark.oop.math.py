@@ -12,7 +12,7 @@ class Student:
         self.courses = {}
 
     def input_mark(self, course_id, mark, credit):
-        rounded_mark = math.floor(mark * 10) / 10  # Round down to 1 decimal
+        rounded_mark = math.floor(mark * 10) / 10  
         self.marks[course_id] = rounded_mark
         self.courses[course_id] = credit
 

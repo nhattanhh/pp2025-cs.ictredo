@@ -1,1 +1,1 @@
-1, asdadsa, 4.0
+linear, linear, 4.0

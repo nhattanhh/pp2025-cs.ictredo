@@ -2,7 +2,6 @@ import curses
 from input import input_students, input_courses, input_marks
 from output import list_students, list_courses, show_message
 
-
 def main(stdscr):
     curses.curs_set(0)
     students = []
@@ -34,7 +33,6 @@ def main(stdscr):
             break
         else:
             show_message(stdscr, "Invalid choice. Please try again.")
-
 
 if __name__ == "__main__":
     curses.wrapper(main)

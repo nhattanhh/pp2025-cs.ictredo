@@ -1,6 +1,5 @@
 import curses
 
-
 def list_students(stdscr, students):
     stdscr.clear()
     students.sort(key=lambda s: s.calculate_gpa(), reverse=True)  

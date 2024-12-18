@@ -21,11 +21,11 @@ def main(stdscr):
 
         choice = stdscr.getch()
         if choice == ord('1'):
-            students = input_students()
+            students = input_students(stdscr)
         elif choice == ord('2'):
-            courses = input_courses()
+            courses = input_courses(stdscr)
         elif choice == ord('3'):
-            input_marks(students, courses)
+            input_marks(stdscr, students, courses)
         elif choice == ord('4'):
             list_students(stdscr, students)
         elif choice == ord('5'):

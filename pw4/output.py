@@ -3,7 +3,7 @@ import curses
 
 def list_students(stdscr, students):
     stdscr.clear()
-    students.sort(key=lambda s: s.calculate_gpa(), reverse=True)  # Sort by GPA descending
+    students.sort(key=lambda s: s.calculate_gpa(), reverse=True)  
     for student in students:
         stdscr.addstr(str(student) + "\n")
     stdscr.refresh()

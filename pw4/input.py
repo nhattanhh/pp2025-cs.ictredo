@@ -9,7 +9,6 @@ def input_students():
         students.append(Student(student_id, name, dob))
     return students
 
-
 def input_courses():
     num_courses = int(input("Enter the number of courses: "))
     courses = {}
